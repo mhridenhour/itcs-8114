@@ -43,7 +43,7 @@ def asc_order_nodes(G):
     output_list = []
 
     while j >= 1:
-        v_j, d_v = get_min_degree_node(H)
+        v_j, _ = get_min_degree_node(H)
         output_list.append(v_j)
         H.remove_node(v_j)
     
@@ -88,12 +88,23 @@ def shortest_path(G, src_node):
 
     return distances
 
+def my_pagerank(DiG, num_iters):
+    ranks = dict()
+    N = DiG.number_of_nodes()
 
+    for node in DiG.nodes():
+        ranks[node] = 1/N
 
+    for _ in range(num_iters):
+        temp_ranks = dict()
+        for node in DiG.nodes():
+            in_weight = 0
+            for pred in DiG.predecessors(node):
+                in_weight += ranks[pred]/len(list(DiG.successors(pred)))
+            temp_ranks[node] = in_weight
+        ranks = temp_ranks
 
-    
-
-    
+    return ranks
 
 def main():
     G = nx.karate_club_graph()
@@ -103,10 +114,18 @@ def main():
     print()
     kg = nx.k_core(G, k=4)
     print(kg.nodes)
-    '''
+    
     dist = shortest_path(G, 0)
     print(dist)
     print(nx.shortest_path(G, source=0,target=26))
-
+    '''
+    DiG = G.to_directed()
+    r = my_pagerank(DiG, 10)
+    for k,v in r.items():
+        print('{}: {}'.format(k, v))
+    print('*******************')
+    nx_r = nx.pagerank(DiG)
+    for k,v in nx_r.items():
+        print('{}: {}'.format(k, v))
 if __name__ == '__main__':
     main()
