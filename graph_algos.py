@@ -145,7 +145,7 @@ def main():
     print('our result: {}'.format(core))
     nx_core_dict = nx.core_number(G)
     nx_core = 0
-    for k, v in nx_core_dict.items():
+    for _, v in nx_core_dict.items():
         if v > nx_core:
             nx_core = v
     print('networkx result: {}'.format(nx_core))
@@ -157,9 +157,9 @@ def main():
         my_dist = avg_shortest_path_node(G, node)
         print('our result: {}'.format(my_dist))
 
-        nx_dict = nx.shortest_path(G, source=node)
+        nx_dict = nx.shortest_path(G, node)
         nx_lengths = []
-        for k, v in nx_dict.items():
+        for _, v in nx_dict.items():
             nx_lengths.append(len(v)-1)
         print('networkx result: {}'.format(mean(nx_lengths)))
     print('\n***************************************\n')
