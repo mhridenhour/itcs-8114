@@ -1,8 +1,34 @@
 import networkx as nx
 import time
 import numpy as np
+from statistics import mean
 
-## K CORE STUFF
+'''
+Edgelist to nx Graph
+'''
+def edgelist_to_nx(filepath):
+    G = nx.Graph()
+    DiG = nx.DiGraph()
+
+    with open(filepath) as f:
+        lines = f.readlines()
+        
+        for line in lines:
+            if line[0] == '#':
+                # print(line)
+                continue
+            else:
+                line = line.split('\t')
+                G.add_edge(int(line[0].strip()), int(line[1].strip()))
+                DiG.add_edge(int(line[0].strip()), int(line[1].strip()))
+
+    return G, DiG
+
+'''
+K-Core: 
+Our solution to the maximum k-core problem is via the Matula-Beck algortihm shown below.
+We included an extra function that allows a user to input a k and generate a subgraph for that k.
+'''
 def matula_beck_degen_order(G, asc=True):
     H = G.copy()
     j = len(G.nodes())
@@ -37,18 +63,6 @@ def get_min_degree_node(G):
 
     return min_node, min_deg
 
-def asc_order_nodes(G):
-    H = G.copy()
-    j = len(G.nodes())
-    output_list = []
-
-    while j >= 1:
-        v_j, _ = get_min_degree_node(H)
-        output_list.append(v_j)
-        H.remove_node(v_j)
-    
-    return output_list
-
 def get_k_core(G, k):
     _, max_k = matula_beck_degen_order(G)
 
@@ -67,7 +81,10 @@ def get_k_core(G, k):
     return(H, list(H.nodes()))
 
 
-def shortest_path(G, src_node):
+'''
+Average shortest path 
+'''
+def avg_shortest_path_node(G, src_node):
     distances = {}
     distances[src_node] = 0
     unvisited = set(G.nodes()) - {src_node}
@@ -86,7 +103,19 @@ def shortest_path(G, src_node):
             queue.append(v)
             unvisited.remove(v)
 
-    return distances
+    avg_dist = mean(distances[node] for node in distances.keys() if distances[node] != np.inf)
+    
+    return avg_dist
+
+def avg_shortest_path_graph(G):
+    out_list = []
+    for node in G.nodes():
+        out_list.append(avg_shortest_path_node(G, node))
+    return mean(out_list)
+
+'''
+PageRank
+'''
 
 def my_pagerank(DiG, num_iters):
     ranks = dict()
@@ -107,25 +136,43 @@ def my_pagerank(DiG, num_iters):
     return ranks
 
 def main():
-    G = nx.karate_club_graph()
-    '''
-    _, core = get_k_core(G, 4)
-    print(core)
-    print()
-    kg = nx.k_core(G, k=4)
-    print(kg.nodes)
     
-    dist = shortest_path(G, 0)
-    print(dist)
-    print(nx.shortest_path(G, source=0,target=26))
-    '''
+    G = nx.erdos_renyi_graph(1000, 0.3)
+    print('\nK-CORE')
+    _, core = matula_beck_degen_order(G)
+    print('computing k-core...')
+    print()
+    print('our result: {}'.format(core))
+    nx_core_dict = nx.core_number(G)
+    nx_core = 0
+    for k, v in nx_core_dict.items():
+        if v > nx_core:
+            nx_core = v
+    print('networkx result: {}'.format(nx_core))
+    print('\n***************************************\n')
+    # shortest path wrt node baseline
+    print('SHORTEST PATH W.R.T. NODE')
+    for node in [0,1,2,3,4,5,6,7,8,9]:
+        print('\ncomputing distances for node {}...'.format(node))
+        my_dist = avg_shortest_path_node(G, node)
+        print('our result: {}'.format(my_dist))
+
+        nx_dict = nx.shortest_path(G, source=node)
+        nx_lengths = []
+        for k, v in nx_dict.items():
+            nx_lengths.append(len(v)-1)
+        print('networkx result: {}'.format(mean(nx_lengths)))
+    print('\n***************************************\n')
+    print('PAGERANK')
+    #pagerank
     DiG = G.to_directed()
-    r = my_pagerank(DiG, 10)
-    for k,v in r.items():
-        print('{}: {}'.format(k, v))
-    print('*******************')
+    r = my_pagerank(DiG, 15)
     nx_r = nx.pagerank(DiG)
-    for k,v in nx_r.items():
-        print('{}: {}'.format(k, v))
+    for node in [0,1,2,3,4,5,6,7,8,9]:
+        print('\ncomputing distances for node {}...'.format(node))
+        print('our result: {}'.format(r[node]))
+        print('networkx result: {}'.format(nx_r[node]))
+
+
 if __name__ == '__main__':
     main()
